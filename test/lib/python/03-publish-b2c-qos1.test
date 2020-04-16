@@ -16,6 +16,7 @@ else:
 
 
 def on_message(mqttc, obj, msg):
+    global run
     if msg.mid != 123:
         print("Invalid mid: ("+str(msg.mid)+")")
         exit(1)
@@ -31,13 +32,15 @@ def on_message(mqttc, obj, msg):
     if msg.retain != False:
         print("Invalid retain: ("+str(msg.retain)+")")
         exit(1)
-    exit(0)
 
+    run = 0
+    
 def on_connect(mqttc, obj, flags, rc):
     if rc != 0:
         print("Connect failed ("+str(rc)+")")
         exit(rc)
 
+run = -1
 mqttc = mqtt.Client("publish-qos1-test")
 mqttc.message_retry_set(3)
 mqttc.on_connect = on_connect
@@ -45,7 +48,6 @@ mqttc.on_message = on_message
 
 mqttc.connect("localhost", 1888)
 rc = 0
-while rc == 0:
-    rc = mqttc.loop()
-print("rc: "+str(rc))
-exit(1)
+while run == -1 and rc == 0:
+    rc = mqttc.loop(0.3)
+exit(run)
