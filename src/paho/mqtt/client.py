@@ -17,6 +17,7 @@ from .subscribeoptions import SubscribeOptions
 from .reasoncodes import ReasonCodes
 from .properties import Properties
 from .matcher import MQTTMatcher
+from . import qos1ack
 import logging
 import hashlib
 import string
@@ -3228,9 +3229,10 @@ class Client(object):
             self._handle_on_message(message)
             return MQTT_ERR_SUCCESS
         elif message.qos == 1:
-            rc = self._send_puback(message.mid)
-            self._handle_on_message(message)
-            return rc
+            return qos1ack.upon_delivery(
+              handle_message=lambda ack: self._handle_on_message(message), 
+              send_ack=lambda: self._send_puback(message.mid)
+            )
         elif message.qos == 2:
             rc = self._send_pubrec(message.mid)
             message.state = mqtt_ms_wait_for_pubrel
