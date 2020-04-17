@@ -898,8 +898,11 @@ class Client(object):
     def qos1_set_ack_strategy(self, strategy):
         """Set the strategy for acknowledging QoS 1 messages.
         (Required) 
-        strategy: One of {"UPON_DELIVERY", "ONCE_MESSAGE_HANDLED"}
-        
+        strategy: One of {"UPON_DELIVERY", "UPON_SUCCESSFUL_HANDLING"}
+
+        Depending on the broker implementation, unacked messages might only be republished 
+        on subscriber reconnection if clean_session was set to false.
+
         Defaults to "UPON_DELIVERY"."""
         
         impl = qos1ack.get_strategy(strategy)
@@ -3439,6 +3442,8 @@ class Client(object):
                     except Exception as err:
                         self._easy_log(
                             MQTT_LOG_ERR, 'Caught exception in on_message: %s', err)
+                        return err
+        return None
 
     def _thread_main(self):
         self.loop_forever(retry_first_connection=True)
