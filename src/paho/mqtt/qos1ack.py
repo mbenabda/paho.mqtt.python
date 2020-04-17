@@ -22,3 +22,17 @@ def once_message_handled(handle_message, send_ack):
     send_ack_function = Once(send_ack)
     handle_message(send_ack_function.execute)
     return send_ack_function.execute()
+
+STRATEGIES = {
+    "UPON_DELIVERY": upon_delivery, 
+    "ONCE_MESSAGE_HANDLED": once_message_handled
+}
+
+def get_strategy(identifier):
+    if identifier in STRATEGIES:
+        return STRATEGIES[identifier]
+    return None
+
+def list_available_strategies():
+    return STRATEGIES.values()
+

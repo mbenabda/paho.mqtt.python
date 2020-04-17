@@ -652,6 +652,7 @@ class Client(object):
         self._websocket_extra_headers = None
         # for clean_start == MQTT_CLEAN_START_FIRST_ONLY
         self._mqttv5_first_connect = True
+        self._qos1_ack_strategy = qos1ack.get_strategy("UPON_DELIVERY")
 
     def __del__(self):
         self._reset_sockets()
@@ -893,6 +894,19 @@ class Client(object):
             raise ValueError("proxy_type and/or proxy_addr are invalid.")
         else:
             self._proxy = proxy_args
+
+    def qos1_set_ack_strategy(self, strategy):
+        """Set the strategy for acknowledging QoS 1 messages.
+        (Required) 
+        strategy: One of {"UPON_DELIVERY", "ONCE_MESSAGE_HANDLED"}
+        
+        Defaults to "UPON_DELIVERY"."""
+        
+        impl = qos1ack.get_strategy(strategy)
+        if impl is None:
+            raise ValueError("qos1_ack_strategy {0} is invalid.".format(strategy))
+        else:
+            self._qos1_ack_strategy = impl        
 
     def enable_logger(self, logger=None):
         """ Enables a logger to send log messages to """
@@ -3229,7 +3243,7 @@ class Client(object):
             self._handle_on_message(message)
             return MQTT_ERR_SUCCESS
         elif message.qos == 1:
-            return qos1ack.upon_delivery(
+            return self._qos1_ack_strategy(
               handle_message=lambda ack: self._handle_on_message(message), 
               send_ack=lambda: self._send_puback(message.mid)
             )
